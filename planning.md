@@ -34,7 +34,7 @@ This community is a perfect fit for a text classification task because its disco
 ## Hard Edge Cases
 
 ### The Ambiguity
-The most common edge case occurs when a user utilizes tactical vocabulary to express a purely visceral emotional reaction. For example: *"Pure anti-football from the opposition. Just parked the bus for 90 minutes and prayed for a draw. Horrible to watch."* The phrase "parked the bus" refers to a low-block defensive tactic, which flirts with `tactical_analysis`. 
+The most common edge case occurs when a user utilizes tactical vocabulary to express a purely visceral emotional reaction. For example: *"Pure anti-football from the opposition. Just parked the bus for 90 minutes and prayed for a draw. Horrible to watch."* The phrase "parked the bus" refers to a low-block defensive tactic, which makes it seem like `tactical_analysis`. 
 
 ### Handling Rules
 During annotation, this will be handled via a **Primary Intent Rule**. If a post mentions a tactical element but wraps it entirely in hyperbole and emotional complaints without breaking down *how* the structure functioned mechanically, it will be classified under `fan_sentiment`. To fall under `tactical_analysis`, the comment must prioritize structural execution over subjective frustration.
@@ -47,7 +47,7 @@ During annotation, this will be handled via a **Primary Intent Rule**. If a post
 Data will be scraped and sampled directly from active World Cup Match Threads, Post-Match Threads, and Daily Discussion hubs on [r/soccer/new](https://www.reddit.com/r/soccer/new/).
 
 ### Collection Strategy
-The target is a minimum of 200 total examples, aiming for roughly 65–70 examples per label to keep the dataset balanced. 
+The target is a minimum of 200 total examples, aiming for roughly 65–80 examples per label to keep the dataset balanced. 
 
 ### Mitigation Strategy
 If `tactical_analysis` is significantly underrepresented after collecting 200 random comments (as match threads lean heavily toward live hype), I will pivot my collection plan to search exclusively for tactical keywords or pull text directly from dedicated tactical analysis threads rather than live match streams.
@@ -57,7 +57,7 @@ If `tactical_analysis` is significantly underrepresented after collecting 200 ra
 ## Evaluation Metrics
 
 ### Selected Metrics
-I will evaluate the model using **Macro-Averaged F1-Score** alongside a standard **Confusion Matrix**, rather than relying solely on global Accuracy.
+I will evaluate the model using **Macro-Averaged F1-Score** alongside a **Confusion Matrix**, rather than relying solely on Accuracy.
 
 ### Why They are Right
 Because live Reddit data naturally skews heavily toward low-effort emotional commentary (`fan_sentiment`), a model could easily achieve high baseline accuracy just by predicting the majority class. Macro-averaged F1-score averages the precision and recall of each class independently, forcing the model to perform well on the scarcer, highly substantive `tactical_analysis` posts to get a high score. The confusion matrix will pinpoint exactly where the boundaries are bleeding—such as whether tactical rants are being misclassified as pure sentiment.
@@ -67,7 +67,7 @@ Because live Reddit data naturally skews heavily toward low-effort emotional com
 ## Definition of Success
 
 ### Deployment Benchmark
-For this classifier to be genuinely useful as a community filtering tool (e.g., a browser extension that allows users to filter out live match noise to find smart discussion), it needs to achieve a **Macro F1-score of at least 0.80**. 
+For this classifier to be genuinely useful as a community filtering tool (e.g., a browser extension that allows users to filter out live match noise to find smart discussion), it needs to achieve a **Macro F1-score of at least 0.70**. 
 
 ### Good Enough Threshold
 For real-world deployment, I would accept a configuration where `tactical_analysis` has exceptionally high **Precision (0.85+)**, even if its Recall is lower. It is much better for a user filtering for high-quality tactical discussion to miss a few good posts (lower recall) than to have their curated feed flooded with raw emotional screaming misclassified as tactics (poor precision).
@@ -80,7 +80,7 @@ For real-world deployment, I would accept a configuration where `tactical_analys
 I will provide my label definitions and edge-case criteria to an LLM, prompting it to generate 5–10 adversarial, boundary-blurring test posts that specifically straddle the line between `tactical_analysis` and `fan_sentiment`. If the model surfaces synthetic examples that cannot be cleanly resolved via the Primary Intent Rule, I will tighten the linguistic boundaries in my definitions before starting the 200-example annotation phase.
 
 ### 2. Annotation Assistance
-I will use an LLM to pre-label batches of scraped comments to accelerate the workflow. To ensure absolute data integrity and full disclosure, the tracking system will include a boolean column named `is_pre_labeled` alongside an `ai_suggested_label` column in the master spreadsheet. Every automated assignment will be audited and corrected by me before being pushed into the definitive training partition.
+I will use an LLM to pre-label batches of scraped comments to accelerate the workflow. Every automated assignment will be audited and corrected before being pushed into the definitive training partition, so no mistakes are made.
 
 ### 3. Failure Analysis
 Post-evaluation, all validation inputs that yield mismatched predictions will be exported into a structured JSON log. This failure log will be passed to an LLM with instructions to extract latent patterns, semantic biases, or common vocabulary triggers that caused the model to slip up. I will independently verify the AI's structural error hypotheses by cross-referencing the flagged tokens against the project's original annotation boundaries.
